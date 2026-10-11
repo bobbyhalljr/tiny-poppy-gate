@@ -1,0 +1,70 @@
+tiny-poppy-gate
+Inspired by Personal Agent Protocol (Poppy) draft 0.1, Oct 9, 2026.
+This is a teaching toy. Not the real protocol. Not production security.
+
+Discovery
+  GET https://acme.example/.well-known/poppy.json
+  company: Acme Retail (example company)
+  channels: website, api, agent
+  guestAllowed: checkStock, returnsPolicy
+  scopes: guest, read, write
+  signIn: oauth
+
+Session started (guest)
+  agentId: muse-like-agent-example
+  userPseudonym: usr_acme_7f3a9c
+  token: sess_guest_usr_acme_7f3a9c_1791749044361 (mock string, not a JWT)
+  scope: guest
+
+Actions
+
+12:00:02  ALLOW  scope=guest  checkStock -> SKU-1001 in stock: 14 (example)
+         reason: min scope guest satisfied
+12:00:03  ALLOW  scope=guest  returnsPolicy -> 30-day returns with receipt (example)
+         reason: min scope guest satisfied
+12:00:04  DENY   scope=guest  placeOrder
+         reason: not on guestAllowed [checkStock, returnsPolicy]
+12:00:05  DENY   scope=guest  seeOrders
+         reason: not on guestAllowed [checkStock, returnsPolicy]
+
+User approved scope=read (mocked OAuth / consent)
+  new token: sess_read_usr_acme_7f3a9c_1791749044362 (mock string)
+
+12:00:06  ALLOW  scope=read   seeOrders -> 2 open orders: #4812, #4819 (example)
+         reason: min scope read satisfied
+12:00:07  DENY   scope=read   placeOrder
+         reason: needs scope=write; current=read
+
+User approved scope=write (mocked OAuth / consent)
+  new token: sess_write_usr_acme_7f3a9c_1791749044362 (mock string)
+
+12:00:08  ALLOW  scope=write  placeOrder -> order #4820 placed for SKU-1001 (example)
+         reason: min scope write satisfied
+12:00:09  ALLOW  scope=write  changePayment -> payment method updated (example)
+         reason: min scope write satisfied
+
+Scope revoked to guest (fail closed after revoke)
+  new token: sess_guest_usr_acme_7f3a9c_1791749044362 (mock string)
+
+12:00:10  DENY   scope=guest  placeOrder
+         reason: not on guestAllowed [checkStock, returnsPolicy]
+12:00:11  DENY   scope=guest  seeOrders
+         reason: not on guestAllowed [checkStock, returnsPolicy]
+12:00:12  ALLOW  scope=guest  checkStock -> SKU-1001 in stock: 14 (example)
+         reason: min scope guest satisfied
+
+Decision timeline
+------------------------------------------------------------------------
+12:00:02  ALLOW  [guest]  checkStock  |  min scope guest satisfied
+12:00:03  ALLOW  [guest]  returnsPolicy  |  min scope guest satisfied
+12:00:04  DENY   [guest]  placeOrder  |  not on guestAllowed [checkStock, returnsPolicy]
+12:00:05  DENY   [guest]  seeOrders  |  not on guestAllowed [checkStock, returnsPolicy]
+12:00:06  ALLOW  [read]  seeOrders  |  min scope read satisfied
+12:00:07  DENY   [read]  placeOrder  |  needs scope=write; current=read
+12:00:08  ALLOW  [write]  placeOrder  |  min scope write satisfied
+12:00:09  ALLOW  [write]  changePayment  |  min scope write satisfied
+12:00:10  DENY   [guest]  placeOrder  |  not on guestAllowed [checkStock, returnsPolicy]
+12:00:11  DENY   [guest]  seeOrders  |  not on guestAllowed [checkStock, returnsPolicy]
+12:00:12  ALLOW  [guest]  checkStock  |  min scope guest satisfied
+------------------------------------------------------------------------
+allowed=6  denied=5  total=11
