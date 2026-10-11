@@ -34,11 +34,7 @@ Company names, SKUs, and order numbers in the output are **example inputs**.
 
 ## Write-up
 
-- Draft slug: `personal-agent-protocol-discovery`
 - Primary sources: [Sierra Oct 9 draft post](https://sierra.ai/blog/poppy), [Poppy overview](https://personalagentprotocol.org/docs/overview)
-
-## Write-up
-
 - Dev.to: https://dev.to/bobbyhalljr/sierra-shared-personal-agent-protocol-build-a-tiny-discovery-gate-in-typescript-401f
 
 ## License
